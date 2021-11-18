@@ -19,7 +19,7 @@
     <section class="main-content columns">
       <aside class="column is-2 section">
         <p class="menu-label is-hidden-touch">
-          General
+          Heficience Search
         </p>
         <ul class="menu-list">
           <li
@@ -56,10 +56,20 @@ export default {
         {
           title: 'Heficience',
           icon: 'lightbulb',
-          to: { name: 'inspire' }
+          to: { name: 'projet' }
         }
       ]
     }
   }
 }
 </script>
+<style>
+html{
+  background-color: #d7d8da
+}
+body{
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  color: #333;
+}
+</style>
