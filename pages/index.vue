@@ -4,11 +4,14 @@
     <div class="columns">
       <div class="column ">
         <div class="box ">
-          <h1 class="title">Rechercher sur Google™</h1>
+          <h1 class="title">Rechercher sur <select  @change="currentEngine = parseInt($event.target.value); console.log(currentEngine)">
+            <option value="0" selected>Defaut : {{searchEngines[0].name}}</option>
+            <option v-for="(engine,i) in searchEngines" value="i" :key="'se-'+i"  :selected="currentEngine == i">{{engine.name}}</option>
+            </select></h1>
   
           <div class="field has-addons">
               <div class="control" :class="loading ? 'is-loading' :''" >
-                <input type="text" class="input is-large is-primary" v-model="search" @change="suggests = []" @keydown.down="onArrow" @keydown.up="onArrow" v-on:keyup.enter="openGoogle()" @input="searchGoogle()" placeholder="Rechercher sur Google">
+                <input type="text" class="input is-large is-primary" v-model="search" @change="suggests = []" @keydown.down="onArrow" @keydown.up="onArrow" v-on:keyup.enter="openGoogle()" @input="searchbar()" :placeholder="'Rechercher'">
                 <ul v-if="suggests.length > 0" class="suggests">
               <li v-for="(suggest, i) in suggests">
                 <a target="_blank" @click="openGoogle(suggest)" :class="{'has-text-weight-bold': index == i}">
@@ -58,7 +61,6 @@
 </template>
 
 <script>
-import Card from '~/components/Card'
 import axios from 'axios'
 export default {
   name: 'HomePage',
@@ -66,8 +68,10 @@ export default {
     return {
       search: '',
       suggests: [],
-      index: 0,
+      index: -1,
+      currentEngine: 0,
       loading : true,
+      cors : 'https://cors-any.herokuapp.com/',
       links : [
         {
           name : 'Facebook',
@@ -90,20 +94,50 @@ export default {
           icon : 'https://upload.wikimedia.org/wikipedia/commons/7/72/YouTube_social_white_square_%282017%29.svg'
         }
       
+      ],
+      searchEngines : [
+        {
+          name : 'Google',
+          url : 'https://www.google.com/search?q=',
+          url_api: 'https://suggestqueries.google.com/complete/search?client=firefox&q=',
+          icon : 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png'
+        },
+        
+        {
+          name : 'Yahoo',
+          url : 'https://fr.search.yahoo.com/search?p=',
+          url_api: 'https://search.yahoo.com/sugg/ff/g?output=fxjson&command=',
+        },
+        {
+          name : 'Bing',
+          url : 'https://www.bing.com/search?q=',
+          url_api: 'https://api.bing.com/osjson.aspx?query=',
+        },
+        {
+          name : 'DuckDuckGo',
+          url : 'https://duckduckgo.com/?q=',
+          url_api: 'https://duckduckgo.com/ac/?q=',
+        },
+        {
+          name : 'Wikipedia',
+          url : 'https://fr.wikipedia.org/wiki/',
+          url_api: 'https://fr.wikipedia.org/w/api.php?action=opensearch&search=',
+        }
       ]
     }
   },
   methods: {
-    searchGoogle () {
-      this.index = 0
+    searchbar () {
+      this.index = -1
       if(this.search == "") {
         this.suggests = []
         return
       }
       this.loading = true
-      axios.get('https://cors--any.herokuapp.com/http://clients1.google.com/complete/search', {
+      this.search = this.search.replace(/ /g, '+')
+      console.log(this.searchEngines[this.currentEngine].url_api )
+      axios.get(this.cors+this.searchEngines[this.currentEngine].url_api + this.search, {
         params: {
-          q: this.search,
           client: 'firefox',
           hl: 'fr'
         }
@@ -119,7 +153,7 @@ export default {
       })
     },
     openGoogle (thesearch = this.search) {
-      thesearch = encodeURIComponent(thesearch)
+      thesearch = thesearch.replace(/ /g, '+')
       window.open('https://www.google.com/search?q=' +  thesearch)
       this.search = ""
       this.suggests = []
@@ -128,25 +162,22 @@ export default {
     },
     onArrow (e) {
       if(e.keyCode == 40) {
-        if(this.index >= this.suggests.length) {
+        this.index++
+        if(this.index == this.suggests.length) {
           this.index = 0
         }
-        this.search = this.suggests[this.index]
-        this.index++
-
-      }
-      if(e.keyCode == 38) {
-        if(this.index < 0) {
+      } else if(e.keyCode == 38) {
+        this.index--
+        if(this.index == -1) {
           this.index = this.suggests.length - 1
         }
-        this.search = this.suggests[this.index]
-        this.index--
       }
+      this.search = this.suggests[this.index]
     }
   },
   mounted () {
     // Reveil du service cors pour les requêtes cross-domain
-    fetch('https://cors--any.herokuapp.com/').then(response => {
+    fetch(this.cors).then(response => {
       this.loading = false
     })
   }
@@ -165,5 +196,8 @@ export default {
   border-radius: 0 0 4px 4px;
   box-shadow: 0 1px 2px rgba(0,0,0,.1);
   padding: 10px;
+}
+[v-cloak] {
+  display: none;
 }
 </style>
